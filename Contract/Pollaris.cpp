@@ -1,4 +1,4 @@
-#include <Pollaris.hpp>
+#include "Pollaris.hpp"
 
 using TallyResults = std::map<ContestantIdVariant, uint64_t>;
 
@@ -21,7 +21,8 @@ inline uint32_t GetAbstainWeight(const Tags& tags) {
         return 0;
     std::size_t endPos;
     auto weight = std::stoul(tagItr->substr(PARTIAL_ABSTAIN_VOTE_TAG_PREFIX.size()), &endPos);
-    BAL::Verify(endPos == tagItr->size(), "Invalid partial abstain tag found; cannot continue");
+    BAL::Verify((PARTIAL_ABSTAIN_VOTE_TAG_PREFIX.size() + endPos) == tagItr->size(),
+                "Invalid partial abstain tag found; cannot continue");
     BAL::Verify(weight != 0, "Invalid partial abstain tag found; abstain weight must be positive");
     // Attempt to reconstruct the tag from the weight we found; if it doesn't match, reject it.
     BAL::Verify((PARTIAL_ABSTAIN_VOTE_TAG_PREFIX + std::to_string(weight)) == *tagItr,
@@ -199,7 +200,7 @@ void DeleteContestResults(Pollaris& contract, GroupId groupId, ContestId contest
     }
 }
 
-const Pollaris::PollingGroup* FindGroup(Pollaris::PollingGroups& groups, std::string_view name) {
+const Pollaris::PollingGroup* Pollaris::FindGroup(Pollaris::PollingGroups& groups, std::string_view name) {
     const auto& byName = groups.getSecondaryIndex<BY_NAME>();
     auto nameKey = MakeStringKey(name);
 
@@ -295,10 +296,12 @@ void Pollaris::addVoter(string groupName, BAL::AccountHandle voter, uint32_t wei
     BAL::Verify(accountExists(voter), "Unable to add voter to polling group: voter account does not exist");
 
     // Find the group by name, creating it if it doesn't exist
+    BAL::Log("Adding voter", voter, "to group", groupName);
     PollingGroups groups = getTable<PollingGroups>(GLOBAL.value);
     auto group = FindGroup(groups, groupName);
     if (group == nullptr) {
         // Group does not yet exist; create it
+        BAL::Log("Group does not exist. Creating it.");
         group = &groups.create([id=groups.nextId(), &groupName](PollingGroup& group) {
                 group.id = id;
                 group.name = std::move(groupName);
@@ -353,7 +356,7 @@ void Pollaris::removeVoter(string groupName, AccountHandle voter) {
 
     // Find the voter in the group
     GroupAccounts accounts = getTable<GroupAccounts>(group->id);
-    auto account = accounts.getId(voter, "Unable to remove voter from polling group: voter name not recognized");
+    auto& account = accounts.getId(voter, "Unable to remove voter from polling group: voter name not recognized");
     // Delete the voter from the group
     accounts.erase(account);
     UpdateJournal(*this, GROUP_ACCTS, group->id, voter, ModificationType::deleteRow);
@@ -421,7 +424,7 @@ void Pollaris::newContest(GroupId groupId, string name, string description, set<
     BAL::Verify(!name.empty(), "Contest name must not be empty");
     BAL::Verify(contestants.size() > 1, "At least two contestants must be defined");
     CheckContestants(contestants);
-    BAL::Verify(GoodTags(tags), "The contest speifies an invalid tag");
+    BAL::Verify(GoodTags(tags), "The contest specifies an invalid tag");
     BAL::Verify(tags.size() <= 100, "Must not exceed 100 tags");
     BAL::Verify(end > begin, "Contest end date must be after begin date");
     BAL::Verify(end > currentTime(), "Contest end must be in the future");
@@ -662,7 +665,7 @@ void Pollaris::setDecision(GroupId groupId, ContestId contestId, AccountHandle v
     const auto& contest = contests.getId(contestId, "Unable to set decision: contest not found. "
                                                     "Please check contest ID");
     if (abstainVote || abstainWeight)
-        BAL::Verify(tags.count(NO_ABSTAIN_TAG) == 0,
+        BAL::Verify(contest.tags.count(NO_ABSTAIN_TAG) == 0,
                     "Unable to set decision: decision abstains, but contest does not permit abstain votes");
     bool noSplit = contest.tags.count(NO_SPLIT_TAG);
     // If vote splitting is prohibited, check opinions specify exactly one candidate
@@ -682,6 +685,7 @@ void Pollaris::setDecision(GroupId groupId, ContestId contestId, AccountHandle v
     uint64_t totalOpinions = 0;
     Contestants contestants = getTable<Contestants>(groupId);
     for (const auto& pair : opinions.contestantOpinions) {
+        BAL::Verify(pair.second > 0, "The voting weight for a decision should be positive");
         const auto& contestant = contestants.getId(pair.first,
                                                    "Unable to set decision: opinion contestant does not exist");
         BAL::Verify(contestant.contest == contestId,
@@ -692,15 +696,24 @@ void Pollaris::setDecision(GroupId groupId, ContestId contestId, AccountHandle v
     // Create opinions structure for decision by converting explicit write-in contestants to IDs
     Opinions storedOpinions(opinions.contestantOpinions.begin(), opinions.contestantOpinions.end());
     for (const auto& pair : opinions.writeInOpinions) {
+        // Check negative votes before retaining the write-in
+        // Votes for write-ins should be positive to avoid zero-vote spam
+        BAL::Verify(pair.second > 0, "The voting weight for write-ins should be positive");
         auto writeInId = RetainWriteIn(*this, groupId, contestId, pair.first);
         storedOpinions[writeInId] = pair.second;
         totalOpinions += pair.second;
     }
     // Check sum of opinions equals voter's weight
-    if (abstainWeight)
+    if (abstainVote) {
+        // Full abstention
+        // Verification of zero opinions was already checked above
+        // BAL::Verify(opinions.writeInOpinions.empty() && opinions.contestantOpinions.empty() ...
+    } else if (abstainWeight)
+        // Partial abstention
         BAL::Verify((totalOpinions + abstainWeight) == voterEntry.weight,
                     "Unable to set decision: sum of opinions and abstaining weight does not equal voter's weight");
     else
+        // No abstention
         BAL::Verify(totalOpinions == voterEntry.weight,
                     "Unable to set decision: sum of opinions does not equal voter's weight");
 
@@ -719,12 +732,13 @@ void Pollaris::setDecision(GroupId groupId, ContestId contestId, AccountHandle v
         if (itr == decisionsByContest.end()) {
             // No, so create a new one
             auto id = decisions.nextId();
-            decisions.create([id, &contestId, voter, now, &storedOpinions](Decision& decision) {
+            decisions.create([id, &contestId, voter, now, &storedOpinions, &tags](Decision& decision) {
                 decision.id = id;
                 decision.contest = contestId;
                 decision.voter = voter;
                 decision.timestamp = now;
                 decision.opinions = std::move(storedOpinions);
+                decision.tags = std::move(tags);
             });
             UpdateJournal(*this, DECISIONS, groupId, id, ModificationType::addRow);
         } else {
@@ -732,68 +746,12 @@ void Pollaris::setDecision(GroupId groupId, ContestId contestId, AccountHandle v
             for (const auto& pair : itr->opinions)
                 if (std::holds_alternative<WriteInId>(pair.first))
                     ReleaseWriteIn(*this, groupId, std::get<WriteInId>(pair.first));
-            decisionsByContest.modify(itr, [now, &storedOpinions](Decision& decision) {
+            decisionsByContest.modify(itr, [now, &storedOpinions, &tags](Decision& decision) {
                 decision.timestamp = now;
                 decision.opinions = std::move(storedOpinions);
+                decision.tags = std::move(tags);
             });
             UpdateJournal(*this, DECISIONS, groupId, itr->id, ModificationType::modifyRow);
         }
     }
-}
-
-void Pollaris::runTests() {
-    // Require the contract's authority to run tests
-    requireAuthorization(ownerAccount());
-    BAL::Log("\n\nRunning tests");
-
-    BAL::Name alice = "alice"_N;
-    BAL::Name bob = "bob"_N;
-    BAL::Verify(alice == "alice"_N, "Identical names do not compare equal!");
-    BAL::Verify(alice != bob, "Names alice and bob do not compare different!", alice, bob);
-
-    PollingGroups groups = getTable<PollingGroups>("testing"_N.value);
-    auto ClearTables = [&] {
-        {
-            auto itr = groups.begin();
-            while (itr != groups.end()) itr = groups.erase(itr);
-        }
-    };
-    BAL::Log("=> Clearing testing tables");
-    ClearTables();
-
-    BAL::Log("=> Index tests");
-    BAL::Log("==> Testing PollingGroups table");
-    BAL::Log("===> Creating records");
-    groups.create([](PollingGroup& g) {
-        g.id = GroupId{0};
-        g.name = "Latter";
-    });
-    groups.create([](PollingGroup& g) {
-        g.id = GroupId{1};
-        g.name = "Former";
-    });
-
-    {
-        BAL::Log("===> Checking records, primary index");
-        auto itr = groups.begin();
-        BAL::Verify(itr->id == 0, "ID mismatch: ID 0");
-        BAL::Verify(itr->name == "Latter", "Name mismatch: ID 0");
-        ++itr;
-        BAL::Verify(itr->id == 1, "ID mismatch: ID 1");
-        BAL::Verify(itr->name == "Former", "Name mismatch: ID 1");
-    }
-    {
-        BAL::Log("===> Checking records, names index");
-        auto groupsByName = groups.getSecondaryIndex<BY_NAME>();
-        auto itr = groupsByName.begin();
-        BAL::Verify(itr->id == 1, "ID mismatch: ID 1");
-        BAL::Verify(itr->name == "Former", "Name mismatch: ID 1");
-        ++itr;
-        BAL::Verify(itr->id == 0, "ID mismatch: ID 0");
-        BAL::Verify(itr->name == "Latter", "Name mismatch: ID 0");
-    }
-
-    BAL::Log("=> Clearing testing tables");
-    ClearTables();
-    BAL::Log("Finished tests");
 }

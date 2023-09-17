@@ -3,6 +3,7 @@
 #include <BAL/IndexHelpers.hpp>
 
 #include <eosio/eosio.hpp>
+#include <type_traits>
 
 namespace BAL {
 
@@ -121,7 +122,9 @@ public:
         return (--end())->primary_key().incremented();
     }
 
-    const Object& getId(PrimaryKey id, const char* error = "Couldn't find ID") const { return table.get(id, error); }
+    const Object& getId(PrimaryKey id, const char* error = "Couldn't find ID") const {
+        return table.get(id, error);
+    }
     iterator findId(PrimaryKey id) const { return table.find(id); }
     bool contains(PrimaryKey id) const { return findId(id) != table.end(); }
     iterator lowerBound(PrimaryKey lowest) const { return table.lower_bound(lowest); }

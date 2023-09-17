@@ -2,4 +2,4 @@
 
 #include <BAL/Main.hpp>
 
-BAL_MAIN(Pollaris, followmyvote)
+BAL_MAIN(Pollaris, fmv)

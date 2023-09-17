@@ -42,6 +42,9 @@ public:
     // Convert an AccountId to an AccountName
     std::optional<AccountName> getAccountName(AccountId id) { return Name(id); }
     std::optional<AccountName> getAccountName(AccountHandle handle) { return handle; }
+    // Convert to an AccountHandle
+    std::optional<AccountHandle> getAccountHandle(AccountId id) { return getAccountName(id); }
+    std::optional<AccountHandle> getAccountHandle(AccountName name) { return name; }
 
     // Get the current transaction ID
     TransactionId currentTransactionId() {
