@@ -70,11 +70,8 @@ enum class ModificationType : uint8_t {
 
 // Declare type aliases and name imports
 using ContestantIdVariant = std::variant<ContestantId, WriteInId>;
-//BAL_REFLECT_TYPENAME(ContestantIdVariant)
 using Tags = std::set<std::string>;
-//BAL_REFLECT_TYPENAME(Tags)
 using Opinions = std::map<ContestantIdVariant, int32_t>;
-//BAL_REFLECT_TYPENAME(Opinions)
 
 // Declare structs used in the contract interface
 struct ContestantDescriptor {

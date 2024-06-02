@@ -11,7 +11,6 @@ template<typename Stream_T, typename T,
 eosio::datastream<Stream_T>& operator<<(eosio::datastream<Stream_T>& s, const T& t) {
     Util::TypeList::Runtime::ForEach(typename Util::Reflector<T>::Members(), [&s, &t](auto member) {
         using Member = typename decltype(member)::type;
-        BAL::Log(Member::name);
         s << Member::get(t);
     });
     return s;
@@ -22,7 +21,6 @@ template<typename Stream_T, typename T,
 eosio::datastream<Stream_T>& operator>>(eosio::datastream<Stream_T>& s, T& t) {
     Util::TypeList::Runtime::ForEach(typename Util::Reflector<T>::Members(), [&s, &t](auto member) {
         using Member = typename decltype(member)::type;
-        BAL::Log(Member::name);
         s >> Member::get(t);
     });
     return s;

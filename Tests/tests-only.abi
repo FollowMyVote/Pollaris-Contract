@@ -1,0 +1,692 @@
+{
+    "____comment": "This file was generated with eosio-abigen. DO NOT EDIT ",
+    "version": "eosio::abi/1.2",
+    "types": [
+        {
+            "new_type_name": "AccountHandle",
+            "type": "AccountName"
+        },
+        {
+            "new_type_name": "AccountName",
+            "type": "Name"
+        },
+        {
+            "new_type_name": "ContestId",
+            "type": "uint64"
+        },
+        {
+            "new_type_name": "ContestantId",
+            "type": "uint64"
+        },
+        {
+            "new_type_name": "ContestantIdVariant",
+            "type": "variant_ContestantId_WriteInId"
+        },
+        {
+            "new_type_name": "DecisionId",
+            "type": "uint64"
+        },
+        {
+            "new_type_name": "GroupId",
+            "type": "uint64"
+        },
+        {
+            "new_type_name": "JournalId",
+            "type": "uint64"
+        },
+        {
+            "new_type_name": "Name",
+            "type": "name"
+        },
+        {
+            "new_type_name": "Opinions",
+            "type": "pair_ContestantIdVariant_int32[]"
+        },
+        {
+            "new_type_name": "ResultId",
+            "type": "uint64"
+        },
+        {
+            "new_type_name": "Tags",
+            "type": "string[]"
+        },
+        {
+            "new_type_name": "TallyId",
+            "type": "uint64"
+        },
+        {
+            "new_type_name": "Timestamp",
+            "type": "time_point_sec"
+        },
+        {
+            "new_type_name": "WriteInId",
+            "type": "uint64"
+        }
+    ],
+    "structs": [
+        {
+            "name": "Contest",
+            "base": "",
+            "fields": [
+                {
+                    "name": "id",
+                    "type": "ContestId"
+                },
+                {
+                    "name": "name",
+                    "type": "string"
+                },
+                {
+                    "name": "description",
+                    "type": "string"
+                },
+                {
+                    "name": "begin",
+                    "type": "Timestamp"
+                },
+                {
+                    "name": "end",
+                    "type": "Timestamp"
+                },
+                {
+                    "name": "tags",
+                    "type": "Tags"
+                }
+            ]
+        },
+        {
+            "name": "Contestant",
+            "base": "",
+            "fields": [
+                {
+                    "name": "id",
+                    "type": "ContestantId"
+                },
+                {
+                    "name": "contest",
+                    "type": "ContestId"
+                },
+                {
+                    "name": "name",
+                    "type": "string"
+                },
+                {
+                    "name": "description",
+                    "type": "string"
+                },
+                {
+                    "name": "tags",
+                    "type": "Tags"
+                }
+            ]
+        },
+        {
+            "name": "ContestantDescriptor",
+            "base": "",
+            "fields": [
+                {
+                    "name": "name",
+                    "type": "string"
+                },
+                {
+                    "name": "description",
+                    "type": "string"
+                },
+                {
+                    "name": "tags",
+                    "type": "Tags"
+                }
+            ]
+        },
+        {
+            "name": "Decision",
+            "base": "",
+            "fields": [
+                {
+                    "name": "id",
+                    "type": "DecisionId"
+                },
+                {
+                    "name": "contest",
+                    "type": "ContestId"
+                },
+                {
+                    "name": "voter",
+                    "type": "AccountHandle"
+                },
+                {
+                    "name": "timestamp",
+                    "type": "Timestamp"
+                },
+                {
+                    "name": "opinions",
+                    "type": "Opinions"
+                },
+                {
+                    "name": "tags",
+                    "type": "Tags"
+                }
+            ]
+        },
+        {
+            "name": "FullOpinions",
+            "base": "",
+            "fields": [
+                {
+                    "name": "contestantOpinions",
+                    "type": "pair_ContestantId_int32[]"
+                },
+                {
+                    "name": "writeInOpinions",
+                    "type": "pair_ContestantDescriptor_int32[]"
+                }
+            ]
+        },
+        {
+            "name": "GroupAccount",
+            "base": "",
+            "fields": [
+                {
+                    "name": "account",
+                    "type": "AccountHandle"
+                },
+                {
+                    "name": "weight",
+                    "type": "uint32"
+                },
+                {
+                    "name": "tags",
+                    "type": "Tags"
+                }
+            ]
+        },
+        {
+            "name": "JournalEntry",
+            "base": "",
+            "fields": [
+                {
+                    "name": "id",
+                    "type": "JournalId"
+                },
+                {
+                    "name": "timestamp",
+                    "type": "Timestamp"
+                },
+                {
+                    "name": "table",
+                    "type": "Name"
+                },
+                {
+                    "name": "scope",
+                    "type": "uint64"
+                },
+                {
+                    "name": "key",
+                    "type": "uint64"
+                },
+                {
+                    "name": "modification",
+                    "type": "uint8"
+                }
+            ]
+        },
+        {
+            "name": "PollingGroup",
+            "base": "",
+            "fields": [
+                {
+                    "name": "id",
+                    "type": "GroupId"
+                },
+                {
+                    "name": "name",
+                    "type": "string"
+                },
+                {
+                    "name": "tags",
+                    "type": "Tags"
+                }
+            ]
+        },
+        {
+            "name": "Result",
+            "base": "",
+            "fields": [
+                {
+                    "name": "id",
+                    "type": "ResultId"
+                },
+                {
+                    "name": "contest",
+                    "type": "ContestId"
+                },
+                {
+                    "name": "timestamp",
+                    "type": "Timestamp"
+                },
+                {
+                    "name": "tags",
+                    "type": "Tags"
+                }
+            ]
+        },
+        {
+            "name": "Tally",
+            "base": "",
+            "fields": [
+                {
+                    "name": "id",
+                    "type": "TallyId"
+                },
+                {
+                    "name": "result",
+                    "type": "ResultId"
+                },
+                {
+                    "name": "contestant",
+                    "type": "ContestantIdVariant"
+                },
+                {
+                    "name": "tally",
+                    "type": "uint64"
+                },
+                {
+                    "name": "tags",
+                    "type": "Tags"
+                }
+            ]
+        },
+        {
+            "name": "WriteIn",
+            "base": "",
+            "fields": [
+                {
+                    "name": "id",
+                    "type": "WriteInId"
+                },
+                {
+                    "name": "contest",
+                    "type": "ContestId"
+                },
+                {
+                    "name": "name",
+                    "type": "string"
+                },
+                {
+                    "name": "description",
+                    "type": "string"
+                },
+                {
+                    "name": "refcount",
+                    "type": "int16"
+                },
+                {
+                    "name": "tags",
+                    "type": "Tags"
+                }
+            ]
+        },
+        {
+            "name": "addVoter",
+            "base": "",
+            "fields": [
+                {
+                    "name": "groupName",
+                    "type": "string"
+                },
+                {
+                    "name": "voter",
+                    "type": "AccountHandle"
+                },
+                {
+                    "name": "weight",
+                    "type": "uint32"
+                },
+                {
+                    "name": "tags",
+                    "type": "Tags"
+                }
+            ]
+        },
+        {
+            "name": "copyGroup",
+            "base": "",
+            "fields": [
+                {
+                    "name": "groupName",
+                    "type": "string"
+                },
+                {
+                    "name": "newName",
+                    "type": "string"
+                }
+            ]
+        },
+        {
+            "name": "deleteContest",
+            "base": "",
+            "fields": [
+                {
+                    "name": "groupId",
+                    "type": "GroupId"
+                },
+                {
+                    "name": "contestId",
+                    "type": "ContestId"
+                }
+            ]
+        },
+        {
+            "name": "modifyContest",
+            "base": "",
+            "fields": [
+                {
+                    "name": "groupId",
+                    "type": "GroupId"
+                },
+                {
+                    "name": "contestId",
+                    "type": "ContestId"
+                },
+                {
+                    "name": "newName",
+                    "type": "string?"
+                },
+                {
+                    "name": "newDescription",
+                    "type": "string?"
+                },
+                {
+                    "name": "newTags",
+                    "type": "Tags?"
+                },
+                {
+                    "name": "deleteContestants",
+                    "type": "ContestantId[]"
+                },
+                {
+                    "name": "addContestants",
+                    "type": "ContestantDescriptor[]"
+                },
+                {
+                    "name": "newBegin",
+                    "type": "Timestamp?"
+                },
+                {
+                    "name": "newEnd",
+                    "type": "Timestamp?"
+                }
+            ]
+        },
+        {
+            "name": "newContest",
+            "base": "",
+            "fields": [
+                {
+                    "name": "groupId",
+                    "type": "GroupId"
+                },
+                {
+                    "name": "name",
+                    "type": "string"
+                },
+                {
+                    "name": "description",
+                    "type": "string"
+                },
+                {
+                    "name": "contestants",
+                    "type": "ContestantDescriptor[]"
+                },
+                {
+                    "name": "begin",
+                    "type": "Timestamp"
+                },
+                {
+                    "name": "end",
+                    "type": "Timestamp"
+                },
+                {
+                    "name": "tags",
+                    "type": "Tags"
+                }
+            ]
+        },
+        {
+            "name": "pair_ContestantDescriptor_int32",
+            "base": "",
+            "fields": [
+                {
+                    "name": "key",
+                    "type": "ContestantDescriptor"
+                },
+                {
+                    "name": "value",
+                    "type": "int32"
+                }
+            ]
+        },
+        {
+            "name": "pair_ContestantIdVariant_int32",
+            "base": "",
+            "fields": [
+                {
+                    "name": "key",
+                    "type": "ContestantIdVariant"
+                },
+                {
+                    "name": "value",
+                    "type": "int32"
+                }
+            ]
+        },
+        {
+            "name": "pair_ContestantId_int32",
+            "base": "",
+            "fields": [
+                {
+                    "name": "key",
+                    "type": "ContestantId"
+                },
+                {
+                    "name": "value",
+                    "type": "int32"
+                }
+            ]
+        },
+        {
+            "name": "removeVoter",
+            "base": "",
+            "fields": [
+                {
+                    "name": "groupName",
+                    "type": "string"
+                },
+                {
+                    "name": "voter",
+                    "type": "AccountHandle"
+                }
+            ]
+        },
+        {
+            "name": "renameGroup",
+            "base": "",
+            "fields": [
+                {
+                    "name": "groupName",
+                    "type": "string"
+                },
+                {
+                    "name": "newName",
+                    "type": "string"
+                }
+            ]
+        },
+        {
+            "name": "resetTestData",
+            "base": "",
+            "fields": []
+        },
+        {
+            "name": "runDuringVotingPeriodTests",
+            "base": "",
+            "fields": []
+        },
+        {
+            "name": "runPostVotingPeriodTests",
+            "base": "",
+            "fields": []
+        },
+        {
+            "name": "runPreVotingPeriodTests",
+            "base": "",
+            "fields": []
+        },
+        {
+            "name": "setDecision",
+            "base": "",
+            "fields": [
+                {
+                    "name": "groupId",
+                    "type": "GroupId"
+                },
+                {
+                    "name": "contestId",
+                    "type": "ContestId"
+                },
+                {
+                    "name": "voterName",
+                    "type": "AccountHandle"
+                },
+                {
+                    "name": "opinions",
+                    "type": "FullOpinions"
+                },
+                {
+                    "name": "tags",
+                    "type": "Tags"
+                }
+            ]
+        },
+        {
+            "name": "tallyContest",
+            "base": "",
+            "fields": [
+                {
+                    "name": "groupId",
+                    "type": "GroupId"
+                },
+                {
+                    "name": "contestId",
+                    "type": "ContestId"
+                }
+            ]
+        },
+        {
+            "name": "empty",
+            "base": "",
+            "fields": []
+        }
+    ],
+    "actions": [
+        {
+            "name": "tests.pre",
+            "type": "runPreVotingPeriodTests",
+            "ricardian_contract": ""
+        },
+        {
+            "name": "tests.during",
+            "type": "runDuringVotingPeriodTests",
+            "ricardian_contract": ""
+        },
+        {
+            "name": "tests.post",
+            "type": "runPostVotingPeriodTests",
+            "ricardian_contract": ""
+        },
+        {
+            "name": "tests.reset",
+            "type": "resetTestData",
+            "ricardian_contract": ""
+        },
+        {
+            "name": "tests.quick",
+            "type": "empty",
+            "ricardian_contract": ""
+        }
+    ],
+    "tables": [
+        {
+            "name": "contestants",
+            "type": "Contestant",
+            "index_type": "i64",
+            "key_names": ["contest"],
+            "key_types": ["uint64"]
+        },
+        {
+            "name": "contests",
+            "type": "Contest",
+            "index_type": "i64",
+            "key_names": [],
+            "key_types": []
+        },
+        {
+            "name": "decisions",
+            "type": "Decision",
+            "index_type": "i64",
+            "key_names": [],
+            "key_types": []
+        },
+        {
+            "name": "group.accts",
+            "type": "GroupAccount",
+            "index_type": "i64",
+            "key_names": [],
+            "key_types": []
+        },
+        {
+            "name": "journal",
+            "type": "JournalEntry",
+            "index_type": "i64",
+            "key_names": [],
+            "key_types": []
+        },
+        {
+            "name": "poll.groups",
+            "type": "PollingGroup",
+            "index_type": "i64",
+            "key_names": [],
+            "key_types": []
+        },
+        {
+            "name": "results",
+            "type": "Result",
+            "index_type": "i64",
+            "key_names": [],
+            "key_types": []
+        },
+        {
+            "name": "tallies",
+            "type": "Tally",
+            "index_type": "i64",
+            "key_names": [],
+            "key_types": []
+        },
+        {
+            "name": "write.ins",
+            "type": "WriteIn",
+            "index_type": "i64",
+            "key_names": [],
+            "key_types": []
+        }
+    ],
+    "kv_tables": {},
+    "ricardian_clauses": [],
+    "variants": [
+        {
+            "name": "variant_ContestantId_WriteInId",
+            "types": ["ContestantId","WriteInId"]
+        }
+    ],
+    "action_results": []
+}

@@ -44,6 +44,9 @@ protected:
         using Key = typename IndexDescriptor::FieldType;
 
     public:
+        constexpr static Name::raw tag = Tag;
+        using Row = Object;
+
         // All iterators are const! Modification cannot be done by direct iterator access.
         using iterator = typename EosioIndex::const_iterator;
         using const_iterator = iterator;
@@ -100,6 +103,7 @@ protected:
     };
 
 public:
+    using Row = Object;
     using PrimaryKey = decltype(std::declval<Object>().primary_key());
 
     // All iterators are const! Modification cannot be done by direct iterator access.

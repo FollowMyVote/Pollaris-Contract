@@ -107,7 +107,7 @@ Now that the Leap build environment is established, we can use it to build a con
 First, check out the BAL repo, make a `build` directory in the `Example` subdirectory, then use CMake to configure the build, and finally, build the contract.
 
 ```sh
-$ git clone https://github.com/dapp-protocols/Blockchain-Abstraction-Layer bal
+$ git clone https://github.com/dapp-protocols/blockchain-abstraction-layer
 $ mkdir bal/Example/build
 $ cd bal/Example/build
 $ cmake -G Ninja -DCDT_PATH=/opt/leap-cdt ..
@@ -238,7 +238,7 @@ Congratulations on getting your BAL-based smart contract development environment
 
 Of course, a smart contract is only the first step toward implementing a full decentralized application. Smart contracts, like the blockchains they run on, are server-side solutions, and do not operate on end user computers. Applications and GUIs, however, exist entirely on end user hardware. Bridging this gap is the purpose of The DApp Protocols and the Hyperverse project, of which the BAL, providing a stable and portable platform for back-ends, is the first part.
 
-The greater vision of a full, end-to-end solution that reaches users with intuitive and trustworthy decentralized applications is still only beginning to germinate, and I welcome help bringing all parts of this vision to fruition. While the BAL continues to be an active site of development with much work yet to be completed, efforts are also in progress to extend the reach of decentralized software toward the front-end in the form of the [Pollaris DApp](https://github.com/FollowMyVote/Pollaris-Contract), both a contract back-end and GUI front-end. Other related efforts are infrastructures to support the rapid development of tooling and back-end/middleware technology, in the form of [Infra](https://github.com/dapp-protocols/Infra); and to facilitate the creation of highly intuitive graphical applications which dynamically self-construct to adapt to users' individual environments and needs, in the form of [Qappa](https://github.com/dapp-protocols/Qappa).
+The greater vision of a full, end-to-end solution that reaches users with intuitive and trustworthy decentralized applications is still only beginning to germinate, and I welcome help bringing all parts of this vision to fruition. While the BAL continues to be an active site of development with much work yet to be completed, efforts are also in progress to extend the reach of decentralized software toward the front-end in the form of the [Pollaris DApp](https://github.com/FollowMyVote/Pollaris-GUI), both a contract back-end and GUI front-end. Other related efforts are infrastructures to support the rapid development of tooling and back-end/middleware technology, in the form of [Infra](https://github.com/dapp-protocols/Peerplays-Contract-Node/tree/master/Infra); and to facilitate the creation of highly intuitive graphical applications which dynamically self-construct to adapt to users' individual environments and needs, in the form of [Qappa](https://github.com/FollowMyVote/Pollaris-GUI/tree/master/Qappa).
 
 Again, while this vision is broad in reach and is still in its early phases of realization, I hope that what I have shown so far exemplifies the pragmatic feasibility of the vision and the practical usability of the development platforms I am building. Not only is it possible, it has become inevitable. Nevertheless, it's going to take a lot of work to bring it to the market, and I don't plan to do it alone. I look forward to seeing you in the repos!
 

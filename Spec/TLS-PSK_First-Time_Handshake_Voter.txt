@@ -1,0 +1,28 @@
+# Generate at https://sequencediagram.org/
+
+title TLS-PSK First-Time Handshake
+
+participant "Voter App" as App
+participant Server
+
+note over App#lightgreen:App gets invite code I from user
+note over App:App looks up server key S
+note over App:App generates ephemeral key E
+note over App:App combines E.prv with S.pub to derive PSK
+note over App#lightgreen:App encrypts I with symmetric key PSK to get Invite
+App-#lightgreen>Server:[TLS ClientHello] + {E.pub, <color:#darkgreen>Invite</color>}
+
+note over Server:Server commbines S.prv with E.pub to derive PSK
+note over Server#lightgreen:Server decrypts Invite with symmetric key PSK to get I
+note over Server#lightgreen:Server looks up I to find client welcome data W
+Server-#lightgreen>App:[TLS ServerHello + ServerFinished <color:#darkgreen>+ W</color>]
+Server-#lightgreen>App:<color:#darkgreen>Server closes connection</color>
+destroy Server
+
+note over App#lightgreen:App uses W to claim account, then starts standard handshake
+destroysilent App
+
+#Alice->Bob:Click and drag to create a request or\ntype it in the source area to the left
+#Alice<--Bob:drag to move
+#note over Bob,Double click to edit text:Click the **?** icon for **instructions** and **examples**
+#Bob->(3)Double click to edit text:non-instantaneous message

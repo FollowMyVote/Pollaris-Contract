@@ -18,6 +18,7 @@ function(BAL_CONTRACT)
     find_package(cdt HINTS "${CDT_PATH}")
     if (cdt_FOUND)
         message("Leap CDT Found; enabling Leap contract build")
+        set(CDT_ROOT "${CDT_PATH}")
 
         add_subdirectory("${CONTRACT_BAL_PATH}/Leap" "${CMAKE_CURRENT_BINARY_DIR}/BAL/Leap")
     else()

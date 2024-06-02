@@ -1,0 +1,24 @@
+# Generate at https://sequencediagram.org/
+
+title TLS-PSK Standard Handshake
+
+participant App
+participant Server
+
+note over App:App knows client identity key I
+note over App:App looks up server key S
+note over App:App generates ephemeral key E
+note over App:App combines E.prv with S.pub to derive PSK
+note over App:App signs PSK with I.prv to get S_psk
+note over App:App encrypts S_psk with symmetric key PSK to get Auth
+App->Server:[TLS ClientHello] + {E.pub, Auth}
+
+note over Server:Server commbines S.prv with E.pub to derive PSK
+note over Server:Server decrypts Auth with symmetric key PSK to get S_psk
+note over Server:Server verifies S_psk against PSK to get I.pub
+note over Server:Server looks up I.pub to ID/authenticate App
+Server->App:[TLS ServerHello + ServerFinished + Application Message]
+
+App->Server:[TLS ClientFinished + Application Message]
+
+note over App,Server:Connection opened successfully

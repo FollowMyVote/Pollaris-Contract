@@ -339,7 +339,7 @@ Initialized empty Git repository in ~/SupplyChain/.git/
 Alright. Now we add the BAL to our repo. The best way to do this is as a git subtree, which is why we needed the first commit in: git can't add a subtree without at least one commit.
 ```
 [~/SupplyChain] $ # First, we add a remote for the BAL upstream repo
-[~/SupplyChain] $ git remote add -f bal-upstream https://github.com/dapp-protocols/Blockchain-Abstraction-Layer
+[~/SupplyChain] $ git remote add -f bal-upstream https://github.com/dapp-protocols/Blockchain-Abstraction-Layer BAL
 remote: Enumerating objects: 77, done.
 remote: Counting objects: 100% (77/77), done.
 remote: Compressing objects: 100% (73/73), done.

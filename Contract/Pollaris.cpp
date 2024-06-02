@@ -135,19 +135,28 @@ inline void ReleaseWriteIn(Pollaris& contract, GroupId group, WriteInId writeIn)
     }
 }
 
+/// Delete a decision from the provided index referenced by the provided iterator. Iterator will be left pointing to
+/// the next decision after the one removed. This will also release any write-ins retained by this decision.
+template<typename Index>
+inline typename Index::const_iterator DeleteDecision(Pollaris& contract, GroupId group, Index& index,
+                                                     typename Index::const_iterator iterator) {
+    static_assert(std::is_same_v<typename Index::Row, Pollaris::Decision>, "This function only deletes a Decision");
+
+    // For all opinions about write-in candidates, release the write-in candidate before deleting decision
+    for (const auto& opinion : iterator->opinions)
+        if (std::holds_alternative<WriteInId>(opinion.first))
+            ReleaseWriteIn(contract, group, std::get<WriteInId>(opinion.first));
+    UpdateJournal(contract, DECISIONS, group, iterator->id, ModificationType::deleteRow);
+    return index.erase(iterator);
+}
+
 inline void DeleteContestDecisions(Pollaris& contract, GroupId groupId, ContestId contestId) {
     Pollaris::Decisions decisions = contract.getTable<Pollaris::Decisions>(groupId);
     auto decisionsByContest = decisions.getSecondaryIndex<BY_CONTEST>();
     auto range = decisionsByContest.range(Pollaris::Decision::contestKeyMin(contestId),
                                           Pollaris::Decision::contestKeyMax(contestId));
-    while (range.first != range.second) {
-        // For all opinions about write-in candidates, release the write-in candidate before deleting decision
-        for (const auto& opinion : range.first->opinions)
-            if (std::holds_alternative<WriteInId>(opinion.first))
-                ReleaseWriteIn(contract, groupId, std::get<WriteInId>(opinion.first));
-        UpdateJournal(contract, DECISIONS, groupId, range.first->id, ModificationType::deleteRow);
-        range.first = decisionsByContest.erase(range.first);
-    }
+    while (range.first != range.second)
+        range.first = DeleteDecision(contract, groupId, decisionsByContest, range.first);
 }
 
 inline void DeleteContestContestants(Pollaris& contract, GroupId groupId, ContestId contestId) {
@@ -197,6 +206,34 @@ void DeleteContestResults(Pollaris& contract, GroupId groupId, ContestId contest
         }
 
         UpdateJournal(contract, RESULTS, groupId, result, ModificationType::deleteRow);
+    }
+}
+
+/// Delete all decisions on the given contest which vote for the given contestant
+void DeleteDecisionsByContestant(Pollaris& contract, GroupId group, ContestId contest, ContestantId contestant) {
+    Pollaris::Decisions decisions = contract.getTable<Pollaris::Decisions>(group);
+    auto decisionsByContest = decisions.getSecondaryIndex<BY_CONTEST>();
+    auto range = decisionsByContest.range(Pollaris::Decision::contestKeyMin(contest),
+                                          Pollaris::Decision::contestKeyMax(contest));
+
+    auto votesForContestant = [contestant](const std::pair<ContestantIdVariant, int32_t>& opinion) {
+        // Opinion votes for the particular contestant if it votes for *a* contestant, whose ID is our target,
+        // AND if the opinion is non-zero.
+        // This fails to preserve an invariant that all decisions' opinions will reference an extant contestant...
+        // But it guarantees that all *nonzero* opinions reference an extant contestant.
+        return std::holds_alternative<ContestantId>(opinion.first) &&
+               std::get<ContestantId>(opinion.first) == contestant &&
+               opinion.second != 0;
+    };
+
+    // Iterate all decisions on the contest
+    while (range.first != range.second) {
+        // If any opinion in the decision votes for the target contestant... delete that decision
+        if (std::any_of(range.first->opinions.begin(), range.first->opinions.end(), votesForContestant))
+            // Delete decision, releasing any write-ins it may have specified
+            range.first = DeleteDecision(contract, group, decisionsByContest, range.first);
+        else
+            ++range.first;
     }
 }
 
@@ -349,10 +386,12 @@ void Pollaris::removeVoter(string groupName, AccountHandle voter) {
     auto group = FindGroup(groups, groupName);
     BAL::Verify(group != nullptr, "Unable to remove voter from polling group: group name not recognized");
 
-    // Check that no contests exist for the group (groups become immutable when the first contests is created)
-    Contests contests = getTable<Contests>(group->id);
-    BAL::Verify(contests.begin() == contests.end(),
-                "Cannot remove voters from a polling group once that group has contests");
+    // Delete all decisions from the voter
+    auto decisions = getTable<Decisions>(group->id);
+    auto byVoter = decisions.template getSecondaryIndex<BY_VOTER>();
+    auto decision = byVoter.lowerBound(Decision::voterKeyMin(voter));
+    while (decision != byVoter.end() && decision->voter == voter)
+        decision = DeleteDecision(*this, group->id, byVoter, decision);
 
     // Find the voter in the group
     GroupAccounts accounts = getTable<GroupAccounts>(group->id);
@@ -466,8 +505,8 @@ void Pollaris::modifyContest(GroupId groupId, ContestId contestId, optional<stri
         BAL::Verify(newTags->size() <= 100, "Must not exceed 100 tags");
     }
     CheckContestants(addContestants);
-    if (newBegin.has_value()) BAL::Verify(*newBegin > currentTime(),
-                                      "If modifying a contest begin date, the new begin date must be in the future");
+    if (newBegin.has_value()) BAL::Verify(*newBegin >= currentTime(),
+                                      "If modifying a contest begin date, the new begin date must not be in the past");
 
     // Check the group is valid
     BAL::Verify(getTable<PollingGroups>(GLOBAL.value).contains(groupId),
@@ -477,8 +516,12 @@ void Pollaris::modifyContest(GroupId groupId, ContestId contestId, optional<stri
     Contests contests = getTable<Contests>(groupId);
     const auto& contest = contests.getId(contestId, "Referenced contest not found. Check token and contest IDs");
     // Check begin/end dates' validity
-    BAL::Verify(contest.begin > currentTime(), "Cannot modify a contest after it has begun");
-    BAL::Verify(newEnd.value_or(contest.end) > currentTime(), "Contest end date must be in the future");
+    if (contest.begin < currentTime()) {
+        // Modifying a contest which has already begun. No change to begin date allowed
+        BAL::Verify(!newBegin, "Cannot change contest begin date after contest has begun");
+        // Cannot change name or description either
+        BAL::Verify(!newName && !newDescription, "Cannot change contest name or description after contest has begun");
+    }
     BAL::Verify(newEnd.value_or(contest.end) > newBegin.value_or(contest.begin),
           "Contest end date must be after begin date");
 
@@ -496,11 +539,15 @@ void Pollaris::modifyContest(GroupId groupId, ContestId contestId, optional<stri
 
     // Delete the removed contestants
     while (contestantsRange.first != contestantsRange.second && !deleteContestants.empty()) {
+        auto removedContestantId = contestantsRange.first->id;
         // Check if the inspected contestant is one to delete
-        auto toDeleteItr = deleteContestants.find(contestantsRange.first->id);
+        auto toDeleteItr = deleteContestants.find(removedContestantId);
         // If it is, delete it and remove it from the set to delete. Either way, move to inspect next contestant
         if (toDeleteItr != deleteContestants.end()) {
-            UpdateJournal(*this, CONTESTANTS, groupId, contestantsRange.first->id, ModificationType::deleteRow);
+            // Remove any decisions referencing the deleted contestant
+            DeleteDecisionsByContestant(*this, groupId, contestId, removedContestantId);
+            // Remove the contestant
+            UpdateJournal(*this, CONTESTANTS, groupId, removedContestantId, ModificationType::deleteRow);
             contestantsRange.first = contestantsByContest.erase(contestantsRange.first);
             deleteContestants.erase(toDeleteItr);
         } else {
