@@ -6,4 +6,4 @@ While GitHub is a widely known and popular hosting provider for open source proj
 
 For more information, search the web for "Give Up GitHub."
 
-UPDATE: This project is no longer hosted at [Follow My Vote GitLab](https://gitlab.followmy.vote/pollaris/pollaris-contract) as [Nathaniel Hourt](https://github.com/nathanielhourt) destroyed it as of Feb 2025].
+UPDATE: This project is no longer hosted at [Follow My Vote GitLab](https://gitlab.followmy.vote/pollaris/pollaris-contract) as [Nathaniel Hourt](https://github.com/nathanielhourt) destroyed it as of Feb 2025.
